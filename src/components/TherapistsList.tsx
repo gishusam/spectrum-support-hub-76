@@ -1,5 +1,7 @@
 
 import React, { useEffect } from 'react';
+import { Search } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { therapistService, Therapist } from '../services/api/therapistService';
 import TherapistCard from './TherapistCard';

@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../services/api/apiClient';
-import { AUTH_STORAGE_KEYS } from '../config/api.config';
+import { AUTH_STORAGE_KEYS, API_CONFIG } from '../config/api.config';
 import { useToast } from '@/hooks/use-toast';
 
 interface User {
