@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -27,6 +28,8 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,11 +41,29 @@ const Login = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
+      console.log('Attempting to login with:', values.email);
       const success = await login(values.email, values.password);
+      
       if (success) {
+        toast({
+          title: "Login successful",
+          description: "You have been successfully logged in.",
+        });
         navigate('/dashboard');
+      } else {
+        setError("Login failed. Please check your credentials.");
       }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "There was a problem connecting to the server.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +86,12 @@ const Login = () => {
           </div>
 
           <div className="mt-8 bg-card shadow-sm rounded-lg p-6">
+            {error && (
+              <div className="mb-4 p-3 rounded bg-destructive/10 text-destructive text-sm">
+                {error}
+              </div>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField

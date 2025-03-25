@@ -1,4 +1,3 @@
-
 /**
  * API Configuration for SpectrumConnect
  */
@@ -47,4 +46,3 @@ export const AUTH_STORAGE_KEYS = {
   REFRESH_TOKEN: 'spectrum_refresh_token',
   USER_DATA: 'spectrum_user_data',
 };
-

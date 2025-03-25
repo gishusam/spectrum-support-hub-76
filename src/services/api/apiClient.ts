@@ -1,4 +1,3 @@
-
 import { API_CONFIG, AUTH_STORAGE_KEYS } from '../../config/api.config';
 
 /**
@@ -19,6 +18,7 @@ class ApiClient {
   
   constructor() {
     this.baseUrl = API_CONFIG.BASE_URL;
+    console.log('API Client initialized with base URL:', this.baseUrl);
   }
 
   /**
@@ -147,6 +147,7 @@ class ApiClient {
    * Login user and store tokens
    */
   public async login(email: string, password: string): Promise<ApiResponse> {
+    console.log('Attempting login to:', `${this.baseUrl}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`);
     const response = await this.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, { email, password });
     
     if (response.data) {
