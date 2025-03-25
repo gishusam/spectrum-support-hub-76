@@ -20,6 +20,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
+  isTherapist: () => boolean;
+  isUser: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +31,8 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => false,
   register: async () => false,
   logout: () => {},
+  isTherapist: () => false,
+  isUser: () => false,
 });
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -120,6 +124,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
+  const isTherapist = () => {
+    return user?.role === 'therapist';
+  };
+
+  const isUser = () => {
+    return user?.role === 'user';
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -129,6 +141,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         register,
         logout,
+        isTherapist,
+        isUser,
       }}
     >
       {children}
@@ -154,4 +168,47 @@ export const RequireAuth: React.FC<{ children: ReactNode }> = ({ children }) => 
   }
 
   return isAuthenticated ? <>{children}</> : null;
+};
+
+// Role-based route guards
+export const RequireTherapist: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, isTherapist } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        navigate('/login');
+      } else if (!isTherapist()) {
+        navigate('/dashboard');
+      }
+    }
+  }, [isAuthenticated, isLoading, isTherapist, navigate]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  return isAuthenticated && isTherapist() ? <>{children}</> : null;
+};
+
+export const RequireUser: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, isUser } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        navigate('/login');
+      } else if (!isUser()) {
+        navigate('/therapist-dashboard');
+      }
+    }
+  }, [isAuthenticated, isLoading, isUser, navigate]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  return isAuthenticated && isUser() ? <>{children}</> : null;
 };

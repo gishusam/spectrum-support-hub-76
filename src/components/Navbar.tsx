@@ -1,22 +1,68 @@
 
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, X, User, Settings, Sun, Moon } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, X, User, Settings, Sun, Moon, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout, isTherapist } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Therapists', path: '/therapists' },
-    { name: 'Appointments', path: '/appointments' },
-    { name: 'Community', path: '/community' },
-    { name: 'Resources', path: '/resources' },
-  ];
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // Different nav items based on authentication and role
+  const getNavItems = () => {
+    const commonItems = [
+      { name: 'Home', path: '/' },
+    ];
+
+    if (!isAuthenticated) {
+      return [
+        ...commonItems,
+        { name: 'Therapists', path: '/therapists' },
+        { name: 'Resources', path: '/resources' },
+        { name: 'Community', path: '/community' },
+      ];
+    }
+
+    if (isTherapist()) {
+      return [
+        ...commonItems,
+        { name: 'My Dashboard', path: '/therapist-dashboard' },
+        { name: 'Appointments', path: '/appointments' },
+        { name: 'Patients', path: '/patients' },
+        { name: 'Community', path: '/community' },
+      ];
+    }
+
+    return [
+      ...commonItems,
+      { name: 'My Dashboard', path: '/dashboard' },
+      { name: 'Therapists', path: '/therapists' },
+      { name: 'Appointments', path: '/appointments' },
+      { name: 'Resources', path: '/resources' },
+      { name: 'Community', path: '/community' },
+    ];
+  };
+
+  const navItems = getNavItems();
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -48,12 +94,42 @@ const Navbar: React.FC = () => {
             <button className="p-2 rounded-full hover:bg-secondary transition-colors focus-ring">
               <Sun size={20} className="text-foreground/80" />
             </button>
-            <NavLink to="/profile" className="p-2 rounded-full hover:bg-secondary transition-colors focus-ring">
-              <User size={20} className="text-foreground/80" />
-            </NavLink>
-            <NavLink to="/settings" className="p-2 rounded-full hover:bg-secondary transition-colors focus-ring">
-              <Settings size={20} className="text-foreground/80" />
-            </NavLink>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-2 rounded-full hover:bg-secondary transition-colors focus-ring flex items-center">
+                    <User size={20} className="text-foreground/80" />
+                    <span className="ml-2 text-sm font-medium">{user?.name}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={() => navigate('/login')}>
+                  Sign In
+                </Button>
+                <Button onClick={() => navigate('/register')}>
+                  Sign Up
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -84,21 +160,81 @@ const Navbar: React.FC = () => {
               {item.name}
             </NavLink>
           ))}
-          <div className="pt-4 pb-3 border-t border-border">
-            <div className="flex items-center px-3">
-              <div className="flex items-center space-x-3">
-                <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                  <Sun size={20} className="text-foreground/80" />
-                </button>
-                <NavLink to="/profile" onClick={() => setIsMenuOpen(false)} className="p-2 rounded-full hover:bg-secondary transition-colors">
-                  <User size={20} className="text-foreground/80" />
-                </NavLink>
-                <NavLink to="/settings" onClick={() => setIsMenuOpen(false)} className="p-2 rounded-full hover:bg-secondary transition-colors">
-                  <Settings size={20} className="text-foreground/80" />
-                </NavLink>
+          
+          {isAuthenticated ? (
+            <>
+              <div className="pt-4 pb-3 border-t border-border">
+                <div className="flex items-center px-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-base font-medium">{user?.name}</div>
+                    <div className="text-sm text-muted-foreground">{user?.email}</div>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1 px-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/profile');
+                    }}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/settings');
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                </div>
               </div>
+            </>
+          ) : (
+            <div className="pt-4 pb-3 border-t border-border px-3 space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => {
+                  navigate('/login');
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign In
+              </Button>
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  navigate('/register');
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign Up
+              </Button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </header>
